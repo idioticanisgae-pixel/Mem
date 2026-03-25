@@ -21243,7 +21243,59 @@ function Modules.AdonisPanel:Initialize()
         warn("[AdonisPanel] v2 Ready — "..self.Config.ToggleKey.Name.." or ;apanel")
     end)
 end
-
+RegisterCommand({
+    Name        = "freezer",
+    Aliases     = {"fanim"},
+    Description = "freezes your animations",
+    ArgsDesc    = {},
+    Permissions = {},
+}, function(args, speaker)
+    local Players = game:GetService("Players")
+    local UserInputService = game:GetService("UserInputService")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+    local animator = humanoid:WaitForChild("Animator")
+    local frozen = false
+    local connection = nil
+    local function freeze()
+        for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+            track:Stop(0)
+        end
+        connection = animator.AnimationPlayed:Connect(function(track)
+            track:Stop(0)
+        end)
+        humanoid:ChangeState(Enum.HumanoidStateType.None)
+        print("Animations frozen")
+    end
+    local function unfreeze()
+        if connection then
+            connection:Disconnect()
+            connection = nil
+        end
+        humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+        print("Animations unfrozen")
+    end
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.KeyCode == Enum.KeyCode.J then
+            frozen = not frozen
+            if frozen then
+                freeze()
+            else
+                unfreeze()
+            end
+        end
+    end)
+    player.CharacterAdded:Connect(function(newChar)
+        character = newChar
+        humanoid = newChar:WaitForChild("Humanoid")
+        animator = humanoid:WaitForChild("Animator")
+        frozen = false
+        connection = nil
+    end)
+    print("press J to toggle")
+end)
 Modules.AdminOrb = {
     State = {
         Active              = false,
